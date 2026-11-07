@@ -18,14 +18,28 @@ import numpy as np
 
 CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT = 0, 1, 2, 3, 4, 5
 
+#for determining what generation the town is burnt/burning
+GENERATION = 0
+TOWN = (slice(88, 92), slice(38, 42))
+TOWN_BURNING_GENERATION = None
+TOWN_BURNT_GENERATION = None
+
 #index by code so    cha  lak  gra  for  bng  bnt
 P_SPREAD = np.array([0.5, 0.0, 0.9, 0.1, 0.0, 0.0])
 BURN_TIME = np.array([3,   0,   1,  30,  0,   0]) 
 
 TERRAIN = None #original terrain of each cell
 BURN_LEFT = None #days of burning remaining (per cell)
+
 def transition_func(grid, neighbourstates, neighbourcounts):
-    burning_neighbours = neighbourcounts[4]
+    #count gens so it can be printed in command line when town is affected.
+    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    GENERATION += 1
+    
+    #had to alter burning neighbours calculation so that fire doesnt wrap around to the other
+    #side of the grid (fire should not spread like that)
+    b = np.pad(grid == BURNING, 1).astype(int)
+    burning_neighbours = (b[:-2, :-2] + b[:-2, 1:-1] + b[:-2, 2:] + b[1:-1, :-2] + b[1:-1, 2:] + b[2:, :-2] + b[2:, 1:-1] + b[2:, 2:])
     flammable_cells = (grid == 0) | (grid == 2) | (grid == 3) #all unburnt but lake are flammable
     rand1 = np.random.random(grid.shape)
     #catching fire 
@@ -38,6 +52,14 @@ def transition_func(grid, neighbourstates, neighbourcounts):
     #set grid
     grid[on_fire] = BURNING
     grid[burn_out] = BURNT
+    #print when town is burning or burnt
+    town = grid[TOWN]
+    if TOWN_BURNING_GENERATION is None and (town == BURNING).any():
+        TOWN_BURNING_GENERATION = GENERATION
+        print(f"[Generation {GENERATION}]: town is burning", flush=True) #flush forces text output asap
+    if TOWN_BURNT_GENERATION is None and (town == BURNT).any():
+        TOWN_BURNT_GENERATION = GENERATION
+        print(f"[Generation {GENERATION}]: town has burnt", flush=True)
     return grid
 
 def build_terrain(grid):
@@ -114,6 +136,9 @@ def main():
 
     # Run the CA, save grid state every generation to timeline
     timeline = grid.run()
+    #if town doesnt catch fire print.
+    if TOWN_BURNING_GENERATION is None:
+        print(f"town never caught fire in {GENERATION} generations", flush=True)
 
     # save updated config to file
     config.save()
