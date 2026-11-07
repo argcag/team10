@@ -16,26 +16,49 @@ from capyle.ca import Grid2D, Neighbourhood, CAConfig, randomise2d
 import capyle.utils as utils
 import numpy as np
 
+CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT = 0, 1, 2, 3, 4, 5
 
+#index by code so    cha  lak  gra  for  bng  bnt
+P_SPREAD = np.array([0.5, 0.0, 0.9, 0.1, 0.0, 0.0])
+BURN_TIME = np.array([3,   0,   1,  30,  0,   0]) 
+
+TERRAIN = None #original terrain of each cell
+BURN_LEFT = None #days of burning remaining (per cell)
 def transition_func(grid, neighbourstates, neighbourcounts):
-    # unharmed = state == 0, burning = state == 1, burnt = state == 2
-    # unpack state counts for state 0, 1 and 2
-    unharmed_neighbours, burning_neighbours, burnt_neighbours = neighbourcounts
-    #chance of spread is 0.25 per neighbour.
-    p_spread  = 0.25
-    p_burnout = 0.2
+    burning_neighbours = neighbourcounts[4]
+    flammable_cells = (grid == 0) | (grid == 2) | (grid == 3) #all unburnt but lake are flammable
+    #unharmed_neighbours, burning_neighbours, burnt_neighbours = neighbourcounts < og implementation
     rand1 = np.random.random(grid.shape)
-    rand2 = np.random.random(grid.shape)
     #catching fire 
-    catch_fire = 1 - (1 - p_spread)**burning_neighbours
-    on_fire = (grid == 0) & (rand1 < catch_fire)
+    catch_fire = 1 - (1 - P_SPREAD[TERRAIN])**burning_neighbours
+    on_fire = flammable_cells & (rand1 < catch_fire)
     #burning out
-    burn_out = (rand2 < p_burnout) & (grid == 1)
+    burning = (grid == BURNING)
+    BURN_LEFT[burning] -= 1
+    burn_out = burning & (BURN_LEFT <= 0)
     #set grid
-    grid[on_fire] = 1
-    grid[burn_out] = 2
+    grid[on_fire] = BURNING
+    grid[burn_out] = BURNT
     return grid
 
+def build_terrain(grid):
+    global TERRAIN, BURN_LEFT
+    TERRAIN = np.zeros(grid.shape, dtype=int)
+    BURN_LEFT = np.zeros(grid.shape, dtype=int)
+    #set terrain types
+    TERRAIN[grid == 0] = CHAPARRAL
+    TERRAIN[grid == 1] = LAKE
+    TERRAIN[grid == 2] = GRASS
+    TERRAIN[grid == 3] = FOREST
+    TERRAIN[grid == 4] = BURNING
+    TERRAIN[grid == 5] = BURNT
+    #set burn times
+    BURN_LEFT[TERRAIN == CHAPARRAL] = BURN_TIME[CHAPARRAL]
+    BURN_LEFT[TERRAIN == LAKE]     = BURN_TIME[LAKE]
+    BURN_LEFT[TERRAIN == GRASS]    = BURN_TIME[GRASS]
+    BURN_LEFT[TERRAIN == FOREST]   = BURN_TIME[FOREST]
+    BURN_LEFT[TERRAIN == BURNING]  = BURN_TIME[BURNING]
+    BURN_LEFT[TERRAIN == BURNT]    = BURN_TIME[BURNT]
 
 def setup(args):
     config_path = args[0]
@@ -43,18 +66,32 @@ def setup(args):
     # ---THE CA MUST BE RELOADED IN THE GUI IF ANY OF THE BELOW ARE CHANGED---
     config.title = "Wildfire modelling"
     config.dimensions = 2
-    config.states = (0, 1, 2)
+    config.states = (0, 1, 2, 3, 4, 5)
     # ------------------------------------------------------------------------
 
     # ---- Override the defaults below (these may be changed at anytime) ----
     #unburnt = green, burning = red, burnt = gray
-    config.state_colors = [(0.2, 0.6, 0.2),(1, 0.4, 0),(0.15, 0.15, 0.15)]
+    config.state_colors = [
+        (0.45, 0.55, 0.20), #chap greeny yellow
+        (0.20, 0.40, 0.80), #lake blue
+        (0.90, 0.85, 0.40),    #grass kinda yellow
+        (0.2, 0.6, 0.2), #forest dark green
+        (1, 0.4, 0),        #burning orange
+        (0.15, 0.15, 0.15)] #burnt dark gray
     # config.num_generations = 150
     config.grid_dims = (200,200)
     #randomised (for testing)
     #config.initial_grid = np.random.choice([0, 1, 2], size=config.grid_dims, p=[0.6, 0.35, 0.05])
-    grid = np.zeros(config.grid_dims, dtype=int)
-    grid[config.grid_dims[0]//2, config.grid_dims[1]//2] = 1
+    grid = np.full(config.grid_dims, CHAPARRAL, dtype=int)
+    grid[20:90, 110:160] = FOREST   #vscode autofilled these values i will change them later to
+    grid[50:70, 20:40] = GRASS      #match spec
+    grid[80:100, 20:40] = GRASS
+    grid[30:50, 70:90] = GRASS
+    grid[0:20, 0:20] = LAKE
+    grid[0:20, 180:200] = LAKE
+    build_terrain(grid) #store terrain before adding fire
+    grid[(slice(40, 42), slice(30, 32))] = BURNING
+    BURN_LEFT[(slice(40, 42), slice(30, 32))] = BURN_TIME[TERRAIN[(slice(40, 42), slice(30, 32))]] #burn time for initial fire
     config.initial_grid = grid
     # ----------------------------------------------------------------------
 
