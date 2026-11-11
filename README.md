@@ -37,3 +37,22 @@ Also thanks to the COM2005 2016/2017 cohort for being the guinea-pigs!
 CAPyLE is licensed under a BSD licence, the terms of which can be found in the LICENCE file.
 
 Copyright 2017 Peter Worsley
+
+## Wildfire Modelling Files
+For the COM3524 Group Project, we are modelling wildfires using the aforementioned CAPyLE system.
+
+To execute the project, follow the same instructions listed above, but after running 
+`python main.py`, select `main.py` within ca_descriptions.
+
+This file contains the modelling code. Select 'Apply configuration & run CA' without manually
+adjusting any of the parameters, and use the playback controls as mentioned in Usage.
+
+Additionally, a pytest file is accessible within ca_descriptions called `testing.py`. To execute
+this file, run `python -m pytest testing.py -v` in the command line from within
+`./team10/ca_descriptions`. This should then execute all the tests and display which ones have
+passed and failed.
+
+The literature survey is also available to view from within the codebase. To do so, access
+`./team10/literature_survey`. With a suitable TeX editor, you can then access
+`literature_survey.tex` and `references.bib`. The former is the main literature survey document,
+where upon opening the document, the sectioned literature survey will be visible. The latter is a BibTeX file that contains the references used within the literature survey.
