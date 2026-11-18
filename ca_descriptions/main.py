@@ -16,7 +16,7 @@ from capyle.ca import Grid2D, Neighbourhood, CAConfig, randomise2d
 import capyle.utils as utils
 import numpy as np
 
-CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT = 0, 1, 2, 3, 4, 5
+CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT, TOWN_STATE = 0, 1, 2, 3, 4, 5, 6
 
 #for determining what generation the town is burnt/burning
 GENERATION = 0
@@ -24,9 +24,9 @@ TOWN = (slice(88, 92), slice(38, 42))
 TOWN_BURNING_GENERATION = None
 TOWN_BURNT_GENERATION = None
 
-#index by code so    cha  lak  gra  for  bng  bnt
-P_SPREAD = np.array([0.5, 0.0, 0.9, 0.1, 0.0, 0.0])
-BURN_TIME = np.array([3,   0,   1,  30,  0,   0]) 
+#index by code so    cha  lak  gra  for  bng  bnt  twn
+P_SPREAD = np.array([0.5, 0.0, 0.9, 0.1, 0.0, 0.0, 0.5])
+BURN_TIME = np.array([3,   0,   1,  30,  0,   0,   5]) 
 
 TERRAIN = None #original terrain of each cell
 BURN_LEFT = None #days of burning remaining (per cell)
@@ -40,7 +40,7 @@ def transition_func(grid, neighbourstates, neighbourcounts):
     #side of the grid (fire should not spread like that)
     b = np.pad(grid == BURNING, 1).astype(int)
     burning_neighbours = (b[:-2, :-2] + b[:-2, 1:-1] + b[:-2, 2:] + b[1:-1, :-2] + b[1:-1, 2:] + b[2:, :-2] + b[2:, 1:-1] + b[2:, 2:])
-    flammable_cells = (grid == 0) | (grid == 2) | (grid == 3) #all unburnt but lake are flammable
+    flammable_cells = (grid == 0) | (grid == 2) | (grid == 3) | (grid == 6)  #all unburnt but lake are flammable
     rand1 = np.random.random(grid.shape)
     #catching fire 
     catch_fire = 1 - (1 - P_SPREAD[TERRAIN])**burning_neighbours
@@ -73,6 +73,7 @@ def build_terrain(grid):
     TERRAIN[grid == 3] = FOREST
     TERRAIN[grid == 4] = BURNING
     TERRAIN[grid == 5] = BURNT
+    TERRAIN[grid == 6] = TOWN_STATE
     #set burn times
     BURN_LEFT[TERRAIN == CHAPARRAL] = BURN_TIME[CHAPARRAL]
     BURN_LEFT[TERRAIN == LAKE]     = BURN_TIME[LAKE]
@@ -80,6 +81,7 @@ def build_terrain(grid):
     BURN_LEFT[TERRAIN == FOREST]   = BURN_TIME[FOREST]
     BURN_LEFT[TERRAIN == BURNING]  = BURN_TIME[BURNING]
     BURN_LEFT[TERRAIN == BURNT]    = BURN_TIME[BURNT]
+    BURN_LEFT[TERRAIN == TOWN_STATE] = BURN_TIME[TOWN_STATE]
 
 def setup(args):
     config_path = args[0]
@@ -87,7 +89,7 @@ def setup(args):
     # ---THE CA MUST BE RELOADED IN THE GUI IF ANY OF THE BELOW ARE CHANGED---
     config.title = "Wildfire modelling"
     config.dimensions = 2
-    config.states = (0, 1, 2, 3, 4, 5)
+    config.states = (0, 1, 2, 3, 4, 5, 6)
     # ------------------------------------------------------------------------
 
     # ---- Override the defaults below (these may be changed at anytime) ----
@@ -98,7 +100,8 @@ def setup(args):
         (0.90, 0.85, 0.40), #grass kinda yellow
         (0.2, 0.6, 0.2),    #forest dark green
         (1, 0.4, 0),        #burning orange
-        (0.15, 0.15, 0.15)] #burnt dark gray
+        (0.15, 0.15, 0.15), #burnt dark gray
+        (0, 0, 0)]          #black (town)
     config.num_generations = 300 #represents 300 days
     config.grid_dims = (100,100) # 1 cell = 0.5km so grid is 50x50km
     #randomised (for testing)
@@ -108,6 +111,7 @@ def setup(args):
     grid[14:60, 10:25] = FOREST
     grid[60:70, 10:50] = FOREST
     grid[20:30, 64:90] = FOREST
+    grid[88:92, 38:42] = TOWN_STATE
 
     grid[24:45, 35:45] = LAKE
     grid[55:80, 75:80] = LAKE
