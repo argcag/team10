@@ -1,5 +1,6 @@
 import tkinter as tk
 import numpy as np
+import os
 from capyle.utils import gens_to_dims, alerterror, alertcontinue
 from capyle.guicomponents import (_GenerationsUI, _GridDimensionsUI,
                                   _Separator, _NeighbourhoodUI, _RuleNumberUI,
@@ -13,11 +14,25 @@ class _ConfigFrame(tk.Frame):
         self.ca_config = ca_config
         self.ca_graph = None
 
-        btn_reset = tk.Button(self, text="Reset configuration",
-                              command=self.reset)
-        btn_reset.pack()
+        # Top row: Reset button on the left, Wind drop-down on the right
+        top_frame = tk.Frame(self)
+        top_frame.pack(fill=tk.BOTH)
 
-        self.separator()
+        btn_reset = tk.Button(top_frame, text="Reset config",
+                              command=self.reset)
+        btn_reset.pack(side=tk.LEFT)
+
+        self.wind_var = tk.StringVar(value=os.environ.get("CA_WIND", "SE"))
+        os.environ["CA_WIND"] = self.wind_var.get()
+
+        wind_menu = tk.OptionMenu(
+            top_frame,
+            self.wind_var,
+            "NONE", "N", "NE", "E", "SE", "S", "SW", "W", "NW",
+            command=lambda val: os.environ.__setitem__("CA_WIND", val)
+        )
+        wind_menu.pack(side=tk.RIGHT)
+        tk.Label(top_frame, text="Wind:").pack(side=tk.RIGHT)
 
         if self.ca_config.dimensions == 2:
             self.griddims_entry = _GridDimensionsUI(self)
@@ -67,6 +82,8 @@ class _ConfigFrame(tk.Frame):
             self.rulenum_entry.set_default()
         self.generations_entry.set_default()
         self.nhood_select.set_default()
+        self.wind_var.set("SE")
+        os.environ["CA_WIND"] = "SE"
 
     def get_config(self, ca_config, validate=False):
         """Get the config from the UI and store in a CAConfig object"""
