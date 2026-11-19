@@ -18,7 +18,6 @@ import capyle.utils as utils
 import numpy as np
 
 CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT, TOWN_STATE = 0, 1, 2, 3, 4, 5, 6
-CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT, TOWN_STATE = 0, 1, 2, 3, 4, 5, 6
 
 #for determining what generation the town is burnt/burning
 GENERATION = 0
@@ -116,7 +115,6 @@ def build_terrain(grid):
     TERRAIN[grid == 4] = BURNING
     TERRAIN[grid == 5] = BURNT
     TERRAIN[grid == 6] = TOWN_STATE
-    TERRAIN[grid == 6] = TOWN_STATE
     #set burn times
     BURN_LEFT[TERRAIN == CHAPARRAL] = BURN_TIME[CHAPARRAL]
     BURN_LEFT[TERRAIN == LAKE]     = BURN_TIME[LAKE]
@@ -124,7 +122,6 @@ def build_terrain(grid):
     BURN_LEFT[TERRAIN == FOREST]   = BURN_TIME[FOREST]
     BURN_LEFT[TERRAIN == BURNING]  = BURN_TIME[BURNING]
     BURN_LEFT[TERRAIN == BURNT]    = BURN_TIME[BURNT]
-    BURN_LEFT[TERRAIN == TOWN_STATE] = BURN_TIME[TOWN_STATE]
     BURN_LEFT[TERRAIN == TOWN_STATE] = BURN_TIME[TOWN_STATE]
 
 def setup(args):
@@ -138,7 +135,6 @@ def setup(args):
     config.title = "Wildfire modelling"
     config.dimensions = 2
     config.states = (0, 1, 2, 3, 4, 5, 6)
-    config.states = (0, 1, 2, 3, 4, 5, 6)
     # ------------------------------------------------------------------------
 
     # ---- Override the defaults below (these may be changed at anytime) ----
@@ -151,8 +147,6 @@ def setup(args):
         (1, 0.4, 0),        #burning orange
         (0.15, 0.15, 0.15), #burnt dark gray
         (0, 0, 0)]          #black (town)
-        (0.15, 0.15, 0.15), #burnt dark gray
-        (0, 0, 0)]          #black (town)
     config.num_generations = 300 #represents 300 days
     config.grid_dims = (100,100) # 1 cell = 0.5km so grid is 50x50km
     #randomised (for testing)
@@ -162,7 +156,6 @@ def setup(args):
     grid[14:60, 10:25] = FOREST
     grid[60:70, 10:50] = FOREST
     grid[20:30, 64:90] = FOREST
-    grid[88:92, 38:42] = TOWN_STATE
     grid[88:92, 38:42] = TOWN_STATE
 
     grid[24:45, 35:45] = LAKE
