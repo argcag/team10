@@ -65,17 +65,33 @@ WIND_DIRECTION = os.environ.get("CA_WIND", "SE")
 
 TERRAIN = None #original terrain of each cell
 BURN_LEFT = None #days of burning remaining (per cell)
+#water dropping
+#DROP_AT = None      #(gen row col)
+DROP_AT = (90, 85, 45)
+WET_TIME = 50        #steps a soaked cell can't ignite
+WETNESS = None      #steps of protection left, per cell
+DROP_SIZE = 7       #cells per side (odd number). 7 x 7 = 49 cells = 12.25 km^2 (close enough to 12.5)
+
+def apply_drop(grid): #apply water drop
+    _, row, col = DROP_AT                    #centre of the drop
+    half = DROP_SIZE // 2
+    area = (slice(max(row - half, 0), row + half + 1),
+            slice(max(col - half, 0), col + half + 1))
+    WETNESS[area] = WET_TIME
+    grid[area][grid[area] == BURNING] = BURNT
 
 def transition_func(grid, neighbourstates, neighbourcounts):
     #count gens so it can be printed in command line when town is affected.
     global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
     GENERATION += 1
-    
+    if DROP_AT is not None and GENERATION == DROP_AT[0]:
+        apply_drop(grid)
     #had to alter burning neighbours calculation so that fire doesnt wrap around to the other
     #side of the grid (fire should not spread like that)
     #weighted burning neighbours using wind kernel
     w = WIND_KERNELS[WIND_DIRECTION]
     b = np.pad(grid == BURNING, 1).astype(float)
+    
     burning_neighbours = (
             w[0,0]*b[:-2, :-2] + w[0,1]*b[:-2, 1:-1] + w[0,2]*b[:-2, 2:] +
             w[1,0]*b[1:-1, :-2]                      + w[1,2]*b[1:-1, 2:] +
@@ -85,7 +101,8 @@ def transition_func(grid, neighbourstates, neighbourcounts):
     rand1 = np.random.random(grid.shape)
     #catching fire 
     catch_fire = 1 - (1 - P_SPREAD[TERRAIN])**burning_neighbours
-    on_fire = flammable_cells & (rand1 < catch_fire)
+    on_fire = flammable_cells & (rand1 < catch_fire) & (WETNESS == 0)
+    WETNESS[WETNESS > 0] -= 1
     #burning out
     burning = (grid == BURNING)
     BURN_LEFT[burning] -= 1
@@ -104,9 +121,10 @@ def transition_func(grid, neighbourstates, neighbourcounts):
     return grid
 
 def build_terrain(grid):
-    global TERRAIN, BURN_LEFT
+    global TERRAIN, BURN_LEFT, WETNESS
     TERRAIN = np.zeros(grid.shape, dtype=int)
     BURN_LEFT = np.zeros(grid.shape, dtype=int)
+    WETNESS = np.zeros(grid.shape, dtype=int)
     #set terrain types
     TERRAIN[grid == 0] = CHAPARRAL
     TERRAIN[grid == 1] = LAKE
