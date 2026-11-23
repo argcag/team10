@@ -67,7 +67,7 @@ TERRAIN = None #original terrain of each cell
 BURN_LEFT = None #days of burning remaining (per cell)
 #water dropping
 #DROP_AT = None      #(gen row col)
-DROP_AT = (90, 85, 45)
+DROP_AT = (90, 85, 35)
 WET_TIME = 50        #steps a soaked cell can't ignite
 WETNESS = None      #steps of protection left, per cell
 DROP_SIZE = 7       #cells per side (odd number). 7 x 7 = 49 cells = 12.25 km^2 (close enough to 12.5)
