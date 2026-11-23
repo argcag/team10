@@ -17,7 +17,7 @@ from capyle.ca import Grid2D, Neighbourhood, CAConfig, randomise2d
 import capyle.utils as utils
 import numpy as np
 
-CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT, TOWN_STATE = 0, 1, 2, 3, 4, 5, 6
+CHAPARRAL, LAKE, GRASS, FOREST, BURNING, BURNT, TOWN_STATE, WET_STATE = 0, 1, 2, 3, 4, 5, 6, 7
 
 #for determining what generation the town is burnt/burning
 GENERATION = 0
@@ -79,6 +79,9 @@ def apply_drop(grid): #apply water drop
             slice(max(col - half, 0), col + half + 1))
     WETNESS[area] = WET_TIME
     grid[area][grid[area] == BURNING] = BURNT
+    #makes unburnt cells wet (only the ones that could ignite)
+    unburnt = np.isin(grid[area], (CHAPARRAL, GRASS, FOREST, TOWN_STATE)) 
+    grid[area][unburnt] = WET_STATE
 
 def transition_func(grid, neighbourstates, neighbourcounts):
     #count gens so it can be printed in command line when town is affected.
@@ -103,6 +106,8 @@ def transition_func(grid, neighbourstates, neighbourcounts):
     catch_fire = 1 - (1 - P_SPREAD[TERRAIN])**burning_neighbours
     on_fire = flammable_cells & (rand1 < catch_fire) & (WETNESS == 0)
     WETNESS[WETNESS > 0] -= 1
+    dried = (grid == WET_STATE) & (WETNESS == 0) #for rerepresenting visualisation back to normal
+    grid[dried] = TERRAIN[dried]
     #burning out
     burning = (grid == BURNING)
     BURN_LEFT[burning] -= 1
@@ -152,7 +157,7 @@ def setup(args):
     # ---THE CA MUST BE RELOADED IN THE GUI IF ANY OF THE BELOW ARE CHANGED---
     config.title = "Wildfire modelling"
     config.dimensions = 2
-    config.states = (0, 1, 2, 3, 4, 5, 6)
+    config.states = (0, 1, 2, 3, 4, 5, 6, 7)
     # ------------------------------------------------------------------------
 
     # ---- Override the defaults below (these may be changed at anytime) ----
@@ -164,7 +169,8 @@ def setup(args):
         (0.2, 0.6, 0.2),    #forest dark green
         (1, 0.4, 0),        #burning orange
         (0.15, 0.15, 0.15), #burnt dark gray
-        (0, 0, 0)]          #black (town)
+        (0, 0, 0),          #black (town)
+        (0.6, 0.8, 1)]      #wet blue
     config.num_generations = 300 #represents 300 days
     config.grid_dims = (100,100) # 1 cell = 0.5km so grid is 50x50km
     #randomised (for testing)
