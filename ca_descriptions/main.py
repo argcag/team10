@@ -35,6 +35,7 @@ GENERATION = 0
 TOWN = (slice(88, 92), slice(38, 42))
 TOWN_BURNING_GENERATION = None
 TOWN_BURNT_GENERATION = None
+FIRE_END_GENERATION = None
 
 #index by code so    cha  lak  gra  for  bng  bnt  twn   wet    mar  gch  ggr
 P_SPREAD  = np.array([0.50, 0.0, 0.90, 0.10, 0.0, 0.0, 0.50, 0.15, 0.12, 0.20, 0.05, 0.08, 0.01, 0.05, 0.01, 0.02])
@@ -185,7 +186,7 @@ def apply_preburn(grid, strategy):
 
 def transition_func(grid, neighbourstates, neighbourcounts):
     #count gens so it can be printed in command line when town is affected.
-    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION, FIRE_END_GENERATION
     GENERATION += 1
 
     apply_water_strategy(grid)
@@ -219,6 +220,8 @@ def transition_func(grid, neighbourstates, neighbourcounts):
     #set grid
     grid[on_fire] = BURNING
     grid[burn_out] = BURNT
+    if FIRE_END_GENERATION is None and not (grid == BURNING).any():
+        FIRE_END_GENERATION = GENERATION
     #print when town is burning or burnt
     town = grid[TOWN]
     if TOWN_BURNING_GENERATION is None and (town == BURNING).any():
@@ -236,10 +239,11 @@ def build_terrain(grid):
     WETNESS = np.zeros(grid.shape, dtype=int)
 
 def setup(args):
-    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION, FIRE_END_GENERATION
     GENERATION = 0
     TOWN_BURNING_GENERATION = None
     TOWN_BURNT_GENERATION = None
+    FIRE_END_GENERATION = None
     GRAZING_ANIMALS = int(os.environ.get("CA_GRAZING_ANIMALS", "0"))
     PREBURN_STRATEGY = os.environ.get("CA_PREBURN_STRATEGY", "NONE")
     MARSH_ENABLED = os.environ.get("CA_MARSH_ENABLED", "0") == "0"
@@ -323,7 +327,7 @@ def setup(args):
 
 
 def main():
-    global WIND_DIRECTION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    global WIND_DIRECTION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION, FIRE_END_GENERATION
     # Open the config object
     config = setup(sys.argv[1:])
 
@@ -331,6 +335,7 @@ def main():
     GENERATION = 0
     TOWN_BURNING_GENERATION = None
     TOWN_BURNT_GENERATION = None
+    FIRE_END_GENERATION = None
 
     #read wind direction selected in CAPyle drop down menu
     WIND_DIRECTION = os.environ.get("CA_WIND", "SE")
@@ -344,6 +349,20 @@ def main():
     #if town doesnt catch fire print.
     if TOWN_BURNING_GENERATION is None:
         print(f"town never caught fire in {GENERATION} generations", flush=True)
+
+    # calculate wind metrics
+    final_grid = timeline[-1]
+    total_flammable = np.sum(TERRAIN != LAKE)
+    total_affected = np.sum((final_grid == BURNT) | (final_grid == BURNING))
+    pct_burnt = (total_affected / total_flammable) * 100
+
+    fire_dur_str = str(FIRE_END_GENERATION) if FIRE_END_GENERATION is not None else f">{GENERATION} (Still burning)"
+    print(
+        f"Active Duration: {fire_dur_str} | "
+        f"Flammable Burnt: {pct_burnt:.2f}%",
+        flush=True
+    )
+
 
     # save updated config to file
     config.save()
