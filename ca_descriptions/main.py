@@ -61,7 +61,7 @@ WIND_KERNELS = {
 }
 
 WIND_DIRECTION = os.environ.get("CA_WIND", "SE")
-
+BURN_LOCATION = os.environ.get("CA_BURN_LOCATION", "Power Plant")  #default to top left corner if not set 
 
 TERRAIN = None #original terrain of each cell
 BURN_LEFT = None #days of burning remaining (per cell)
@@ -148,10 +148,11 @@ def build_terrain(grid):
     BURN_LEFT[TERRAIN == TOWN_STATE] = BURN_TIME[TOWN_STATE]
 
 def setup(args):
-    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION, BURN_LOCATION
     GENERATION = 0
     TOWN_BURNING_GENERATION = None
     TOWN_BURNT_GENERATION = None
+    BURN_LOCATION = os.environ.get("CA_BURN_LOCATION", "Power Plant")
     config_path = args[0]
     config = utils.load(config_path)
     # ---THE CA MUST BE RELOADED IN THE GUI IF ANY OF THE BELOW ARE CHANGED---
@@ -188,8 +189,15 @@ def setup(args):
     grid[45:50, 50:90] = GRASS
 
     build_terrain(grid) #store terrain before adding fire
-    grid[(slice(0, 2), slice(0, 2))] = BURNING
-    BURN_LEFT[(slice(0, 2), slice(0, 2))] = BURN_TIME[TERRAIN[(slice(0, 2), slice(0, 2))]] #burn time for initial fire
+    if BURN_LOCATION == "Power Plant":
+        grid[(slice(0, 2), slice(0, 2))] = BURNING
+        BURN_LEFT[(slice(0, 2), slice(0, 2))] = BURN_TIME[TERRAIN[(slice(0, 2), slice(0, 2))]] #burn time for initial fire
+    elif BURN_LOCATION == "Incinerator":
+        grid[(slice (0,2), slice (98,100))] = BURNING
+        BURN_LEFT[(slice (0,2), slice (98,100))] = BURN_TIME[TERRAIN[(slice (0,2), slice (98,100))]]
+    else:
+        print(f"None burn location selected.")
+    
     config.initial_grid = grid.copy()
     # ----------------------------------------------------------------------
 
@@ -201,7 +209,7 @@ def setup(args):
 
 
 def main():
-    global WIND_DIRECTION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    global WIND_DIRECTION, BURN_LOCATION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
     # Open the config object
     config = setup(sys.argv[1:])
 
@@ -212,7 +220,9 @@ def main():
 
     #read wind direction selected in CAPyle drop down menu
     WIND_DIRECTION = os.environ.get("CA_WIND", "SE")
+    BURN_LOCATION = os.environ.get("CA_BURN_LOCATION", "Power Plant")
     print(f"Running simulation with global wind: {WIND_DIRECTION}", flush=True)
+    print(f"Running simulation with burn location: {BURN_LOCATION}", flush=True)
 
     # Create grid object
     grid = Grid2D(config, transition_func)

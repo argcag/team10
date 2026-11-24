@@ -117,3 +117,87 @@ def test_burn_left_does_not_decrement_for_burnt_cells(monkeypatch):
     file.transition_func(grid, None, None)
 
     assert file.BURN_LEFT[2, 2] == initial_burn_left
+
+def test_burn_left_does_not_decrement_for_lake_cells(monkeypatch):
+    #ignition chances guaranteed (when appropriate)[cha, lak, gra, for, bng, bnt]
+    monkeypatch.setattr(file, "P_SPREAD", np.array([1.0, 0.0, 1.0, 1.0, 0.0, 0.0]))
+
+    #5x5 chap with one fire on left edge
+    grid = np.full((5, 5), file.CHAPARRAL)
+    file.build_terrain(grid)
+    grid[2, 2] = file.BURNING
+    file.BURN_LEFT[2, 2] = file.BURN_TIME[file.CHAPARRAL]
+
+    initial_burn_left = file.BURN_LEFT[1, 1]  #lake cell
+    grid[1, 1] = file.LAKE
+
+    file.transition_func(grid, None, None)
+
+    assert file.BURN_LEFT[1, 1] == initial_burn_left
+
+def test_burn_left_does_not_decrement_for_town_cells(monkeypatch):
+    #ignition chances guaranteed (when appropriate)[cha, lak, gra, for, bng, bnt]
+    monkeypatch.setattr(file, "P_SPREAD", np.array([1.0, 0.0, 1.0, 1.0, 0.0, 0.0]))
+
+    #5x5 chap with one fire on left edge
+    grid = np.full((5, 5), file.CHAPARRAL)
+    file.build_terrain(grid)
+    grid[2, 2] = file.BURNING
+    file.BURN_LEFT[2, 2] = file.BURN_TIME[file.CHAPARRAL]
+
+    initial_burn_left = file.BURN_LEFT[1, 1]  #town cell
+    grid[1, 1] = file.TOWN_STATE
+
+    file.transition_func(grid, None, None)
+
+    assert file.BURN_LEFT[1, 1] == initial_burn_left
+
+def test_burn_left_does_not_decrement_for_grass_cells(monkeypatch):
+    #ignition chances guaranteed (when appropriate)[cha, lak, gra, for, bng, bnt]
+    monkeypatch.setattr(file, "P_SPREAD", np.array([1.0, 0.0, 1.0, 1.0, 0.0, 0.0]))
+
+    #5x5 chap with one fire on left edge
+    grid = np.full((5, 5), file.CHAPARRAL)
+    file.build_terrain(grid)
+    grid[2, 2] = file.BURNING
+    file.BURN_LEFT[2, 2] = file.BURN_TIME[file.CHAPARRAL]
+
+    initial_burn_left = file.BURN_LEFT[1, 1]  #grass cell
+    grid[1, 1] = file.GRASS
+
+    file.transition_func(grid, None, None)
+
+    assert file.BURN_LEFT[1, 1] == initial_burn_left
+
+def test_burn_left_does_not_decrement_for_forest_cells(monkeypatch):
+    #ignition chances guaranteed (when appropriate)[cha, lak, gra, for, bng, bnt]
+    monkeypatch.setattr(file, "P_SPREAD", np.array([1.0, 0.0, 1.0, 1.0, 0.0, 0.0]))
+
+    #5x5 chap with one fire on left edge
+    grid = np.full((5, 5), file.CHAPARRAL)
+    file.build_terrain(grid)
+    grid[2, 2] = file.BURNING
+    file.BURN_LEFT[2, 2] = file.BURN_TIME[file.CHAPARRAL]
+
+    initial_burn_left = file.BURN_LEFT[1, 1]  #forest cell
+    grid[1, 1] = file.FOREST
+
+    file.transition_func(grid, None, None)
+
+    assert file.BURN_LEFT[1, 1] == initial_burn_left
+
+def test_burn_left_does_not_decrement_for_burning_cells(monkeypatch):
+    #ignition chances guaranteed (when appropriate)[cha, lak, gra, for, bng, bnt]
+    monkeypatch.setattr(file, "P_SPREAD", np.array([1.0, 0.0, 1.0, 1.0, 0.0, 0.0]))
+
+    #5x5 chap with one fire on left edge
+    grid = np.full((5, 5), file.CHAPARRAL)
+    file.build_terrain(grid)
+    grid[2, 2] = file.BURNING
+    file.BURN_LEFT[2, 2] = file.BURN_TIME[file.CHAPARRAL]
+
+    initial_burn_left = file.BURN_LEFT[2, 2]  #burning cell
+
+    file.transition_func(grid, None, None)
+
+    assert file.BURN_LEFT[2, 2] == initial_burn_left - 1
