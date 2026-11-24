@@ -73,6 +73,14 @@ WIND_KERNELS = {
 
 WIND_DIRECTION = os.environ.get("CA_WIND", "SE")
 
+#multiplier for wind kernel, used to make wind stronger or weaker while the simulation is running. 
+#uses a random value between 0.75 and 1.25.
+WIND_STRENGTH = np.random.randint(75, 125) / 100 
+
+WIND_CHANGE = 0.005 #the amount the wind strength will change by each generation, can be negative or positive.
+CHANCE_OF_CHANGE_REVERSE = 5 #the chance of the change in wind strength changing from positive to negative or vice versa, X in 100 chance each generation.
+TOTAL_WIND_STRENGTH = 0 # running total to calculate average wind strength when the town burns
+
 ANIMALS_PER_CELL = 25
 GRAZING_ANIMALS = int(os.environ.get("CA_GRAZING_ANIMALS", "0"))
 
@@ -185,8 +193,10 @@ def apply_preburn(grid, strategy):
 
 def transition_func(grid, neighbourstates, neighbourcounts):
     #count gens so it can be printed in command line when town is affected.
-    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    global GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION, WIND_STRENGTH, WIND_CHANGE, TOTAL_WIND_STRENGTH
     GENERATION += 1
+
+    TOTAL_WIND_STRENGTH += WIND_STRENGTH
 
     apply_water_strategy(grid)
     #had to alter burning neighbours calculation so that fire doesnt wrap around to the other
@@ -221,12 +231,21 @@ def transition_func(grid, neighbourstates, neighbourcounts):
     grid[burn_out] = BURNT
     #print when town is burning or burnt
     town = grid[TOWN]
+
+    if WIND_STRENGTH + WIND_CHANGE > 0.65 and WIND_STRENGTH + WIND_CHANGE < 1.35:
+            WIND_STRENGTH = WIND_STRENGTH + WIND_CHANGE
+    
+    
+    if np.random.randint(0, 100) <= CHANCE_OF_CHANGE_REVERSE:
+        WIND_CHANGE = -WIND_CHANGE
+
     if TOWN_BURNING_GENERATION is None and (town == BURNING).any():
         TOWN_BURNING_GENERATION = GENERATION
         print(f"[Generation {GENERATION}]: town is burning (Wind: {WIND_DIRECTION})", flush=True) #flush forces text output asap
     if TOWN_BURNT_GENERATION is None and (town == BURNT).any():
         TOWN_BURNT_GENERATION = GENERATION
         print(f"[Generation {GENERATION}]: town has burnt", flush=True)
+        print(f"Average wind strength when town burnt: {TOTAL_WIND_STRENGTH / GENERATION}", flush=True)
     return grid
 
 def build_terrain(grid):
@@ -323,7 +342,7 @@ def setup(args):
 
 
 def main():
-    global WIND_DIRECTION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
+    global WIND_DIRECTION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION, TOTAL_WIND_STRENGTH
     # Open the config object
     config = setup(sys.argv[1:])
 
@@ -344,6 +363,7 @@ def main():
     #if town doesnt catch fire print.
     if TOWN_BURNING_GENERATION is None:
         print(f"town never caught fire in {GENERATION} generations", flush=True)
+        print(f"Average wind strength when town burnt: {TOTAL_WIND_STRENGTH / GENERATION}", flush=True)
 
     # save updated config to file
     config.save()
