@@ -33,6 +33,18 @@ class _ConfigFrame(tk.Frame):
         wind_menu.pack(side=tk.RIGHT)
         tk.Label(top_frame, text="Wind:").pack(side=tk.RIGHT)
 
+        self.burn_var = tk.StringVar(value=os.environ.get("CA_BURN_LOCATION", "Power Plant"))
+        os.environ["CA_BURN_LOCATION"] = self.burn_var.get()
+
+        burn_menu = tk.OptionMenu(
+            top_frame,
+            self.burn_var,
+            "NONE", "Power Plant", "Incinerator",
+            command=lambda val: os.environ.__setitem__("CA_BURN_LOCATION", val)
+        )
+        burn_menu.pack(side=tk.RIGHT)
+        tk.Label(top_frame, text="Burn Location:").pack(side=tk.RIGHT)
+
         self.separator()
 
         # --- Group 1: Long-Term Prevention (Grazing & Prescribed Burn) ---
@@ -177,6 +189,8 @@ class _ConfigFrame(tk.Frame):
         os.environ["CA_PREBURN_STRATEGY"] = "NONE"
         self.marsh_var.set(True)
         os.environ["CA_MARSH_ENABLED"] = "0"
+        self.burn_var.set("Power Plant")
+        os.environ["CA_BURN_LOCATION"] = "Power Plant"
 
     def get_config(self, ca_config, validate=False):
         """Get the config from the UI and store in a CAConfig object"""

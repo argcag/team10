@@ -72,9 +72,8 @@ WIND_KERNELS = {
 }
 
 WIND_DIRECTION = os.environ.get("CA_WIND", "SE")
-<<<<<<< HEAD
-BURN_LOCATION = os.environ.get("CA_BURN_LOCATION", "Power Plant")  #default to top left corner if not set 
-=======
+BURN_LOCATION = os.environ.get("CA_BURN_LOCATION", "Power Plant")
+
 
 #multiplier for wind kernel, used to make wind stronger or weaker while the simulation is running. 
 #uses a random value between 0.75 and 1.25.
@@ -86,7 +85,6 @@ TOTAL_WIND_STRENGTH = 0 # running total to calculate average wind strength when 
 
 ANIMALS_PER_CELL = 25
 GRAZING_ANIMALS = int(os.environ.get("CA_GRAZING_ANIMALS", "0"))
->>>>>>> 635b09d37c623fb38357dd17a3b4bb1a9c52673b
 
 TERRAIN = None #original terrain of each cell
 BURN_LEFT = None #days of burning remaining (per cell)
@@ -263,13 +261,10 @@ def setup(args):
     GENERATION = 0
     TOWN_BURNING_GENERATION = None
     TOWN_BURNT_GENERATION = None
-<<<<<<< HEAD
     BURN_LOCATION = os.environ.get("CA_BURN_LOCATION", "Power Plant")
-=======
     GRAZING_ANIMALS = int(os.environ.get("CA_GRAZING_ANIMALS", "0"))
     PREBURN_STRATEGY = os.environ.get("CA_PREBURN_STRATEGY", "NONE")
     MARSH_ENABLED = os.environ.get("CA_MARSH_ENABLED", "0") == "0"
->>>>>>> 635b09d37c623fb38357dd17a3b4bb1a9c52673b
     config_path = args[0]
     config = utils.load(config_path)
     # ---THE CA MUST BE RELOADED IN THE GUI IF ANY OF THE BELOW ARE CHANGED---
@@ -357,11 +352,7 @@ def setup(args):
 
 
 def main():
-<<<<<<< HEAD
-    global WIND_DIRECTION, BURN_LOCATION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION
-=======
     global WIND_DIRECTION, GENERATION, TOWN_BURNING_GENERATION, TOWN_BURNT_GENERATION, TOTAL_WIND_STRENGTH
->>>>>>> 635b09d37c623fb38357dd17a3b4bb1a9c52673b
     # Open the config object
     config = setup(sys.argv[1:])
 
