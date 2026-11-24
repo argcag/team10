@@ -280,7 +280,7 @@ def setup(args):
         (0.20, 0.60, 0.20), # 3: forest
         (1.00, 0.40, 0.00), # 4: burning
         (0.15, 0.15, 0.15), # 5: burnt
-        (0.00, 0.00, 0.00), # 6: town
+        (0.50, 0.00, 0.00), # 6: town
         (0.30, 0.50, 0.45), # 7: marsh
         (0.65, 0.72, 0.40), # 8: grazed chaparral
         (0.95, 0.92, 0.65), # 9: grazed grass
@@ -291,6 +291,10 @@ def setup(args):
         (0.50, 0.68, 0.58), # 14: moist grazed chaparral
         (0.75, 0.88, 0.80), # 15: moist grazed grass
     ]
+    config.state_names = ["Chaparral", "Lake", "Grass", "Forest", "Burning",
+                          "Burnt", "Town", "Marsh", "Grazed Chaparral", "Grazed Grass",
+                          "Moist Chaparral", "Moist Grass", "Moist Forest",
+                          "Moist Town", "Moist Grazed Chaparral", "Moist Grazed Grass"]   
               
     config.num_generations = 300 #represents 300 days
     config.grid_dims = (100,100) # 1 cell = 0.5km so grid is 50x50km

@@ -35,10 +35,17 @@ class _StateColorsUI(tk.Frame, _ConfigUIComponent):
             self.selected_colors = np.array(self.ca_config.state_colors,
                                             dtype=float)
 
+        #optional names set by the CA file (config.state_names), shown next to each number
+        names = getattr(self.ca_config, "state_names", None)
+
         outerframe = tk.Frame(self)
         for i, state in enumerate(self.states):
             frame = tk.Frame(outerframe)
-            label = tk.Label(frame, text=state)
+            if names is not None and i < len(names):
+                text = f"{state}: {names[i]}"
+            else:
+                text = state          #no name given, keep plain number
+            label = tk.Label(frame, text=text)
             self.canvas[i] = tk.Canvas(
                 frame, height=self.CANVASSIZE, width=self.CANVASSIZE,
                 background=rgb_to_hex(*self.selected_colors[i]),
