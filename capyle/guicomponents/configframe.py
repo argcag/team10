@@ -71,6 +71,23 @@ class _ConfigFrame(tk.Frame):
         animals_menu.pack(side=tk.RIGHT)
         tk.Label(grazing_row, text="Grazing Animals:").pack(side=tk.RIGHT)
 
+        forest_row = tk.Frame(longterm_frame)
+        forest_row.pack(fill=tk.BOTH, pady=2)
+        
+        self.forest_var = tk.StringVar(
+                    value=os.environ.get("CA_FOREST_EXTENSION", "NONE")
+                )
+        os.environ["CA_FOREST_EXTENSION"] = self.forest_var.get()
+        
+        forest_menu = tk.OptionMenu(
+            forest_row,
+            self.forest_var,
+            "0", "1", "2",
+            command=lambda val: os.environ.__setitem__("CA_FOREST_EXTENSION", val)
+        )
+        forest_menu.pack(side=tk.RIGHT)
+        tk.Label(forest_row, text="Forest Extension:").pack(side=tk.RIGHT)
+
         preburn_row = tk.Frame(longterm_frame)
         preburn_row.pack(fill=tk.BOTH, pady=2)
 

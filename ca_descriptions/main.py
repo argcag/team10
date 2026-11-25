@@ -265,6 +265,7 @@ def setup(args):
     GRAZING_ANIMALS = int(os.environ.get("CA_GRAZING_ANIMALS", "0"))
     PREBURN_STRATEGY = os.environ.get("CA_PREBURN_STRATEGY", "NONE")
     MARSH_ENABLED = os.environ.get("CA_MARSH_ENABLED", "0") == "0"
+    FOREST_EXTENSION = os.environ.get("CA_FOREST_EXTENSION", "0")
     config_path = args[0]
     config = utils.load(config_path)
     # ---THE CA MUST BE RELOADED IN THE GUI IF ANY OF THE BELOW ARE CHANGED---
@@ -305,6 +306,15 @@ def setup(args):
     grid[14:60, 10:25] = FOREST
     grid[60:70, 10:50] = FOREST
     grid[20:30, 64:90] = FOREST
+
+    if FOREST_EXTENSION == "1":
+        grid[14:30, 0:10] = FOREST
+        grid[10:18, 0:50] = FOREST
+        grid[20:30, 64:100] = FOREST
+
+    if FOREST_EXTENSION == "2":
+        grid[20:30, 45:64] = FOREST
+
     grid[88:92, 38:42] = TOWN_STATE
 
     grid[24:45, 35:45] = LAKE
