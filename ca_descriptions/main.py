@@ -313,7 +313,9 @@ def setup(args):
         grid[20:30, 64:100] = FOREST
 
     if FOREST_EXTENSION == "2":
-        grid[20:30, 45:64] = FOREST
+        grid[14:20, 0:10] = FOREST
+        grid[20:25, 45:100] = FOREST
+        grid[60:65, 50:65] = FOREST
 
     grid[88:92, 38:42] = TOWN_STATE
 
