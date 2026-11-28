@@ -36,8 +36,8 @@ TOWN = (slice(88, 92), slice(38, 42))
 TOWN_BURNING_GENERATION = None
 TOWN_BURNT_GENERATION = None
 
-#index by code so    cha  lak  gra  for  bng  bnt  twn   wet    mar  gch  ggr
-P_SPREAD  = np.array([0.50, 0.0, 0.90, 0.10, 0.0, 0.0, 0.50, 0.15, 0.12, 0.20, 0.05, 0.08, 0.01, 0.05, 0.01, 0.02])
+#index by code so     cha   lak  gra   for   bng  bnt  twn   mar   gcha  ggra  mcha  mgra  mfor  mtwn  mgcha mggra
+P_SPREAD  = np.array([0.50, 0.0, 0.90, 0.10, 0.0, 0.0, 0.50, 0.15, 0.12, 0.20, 0.05, 0.09, 0.01, 0.05, 0.01, 0.02])
 BURN_TIME = np.array([3,    0,   1,    30,   0,   0,   5,    2,    1,    1,    2,    1,    20,   3,    1,    1])
 
 #wind configuration
@@ -95,6 +95,13 @@ WATER_USED = 0
 WET_TIME = 50
 WETNESS = None
 WATER_STRATEGY = os.environ.get("CA_WATER_STRATEGY", "TOWN_SURROUND")
+#values taken from results of wind study
+ARRIVAL_INCINERATOR = {"N": 189, "NE": 206, "E": 166, "SE": 126,
+                       "S": 103, "SW": 98, "W": 113, "NW": 148}
+FLIP = {"N": "N", "S": "S", "E": "W", "W": "E", "NE": "NW", "NW": "NE", "SE": "SW", "SW": "SE"} #flip for power plant/incinerator
+LAST_DROP = {"TOWN_SURROUND": 60, "SINGLE_BLOCK": 90, "TWO_LINES": 80, "ACTIVE_FRONT": 95} #default last drop time
+DROP_LEAD = 10    #the last drop lands this many generations before the fire is expected to arrive
+DROP_SHIFT = None
 
 
 def soak_cells(grid, rows, cols):
@@ -148,20 +155,37 @@ def drop_active_front(grid, max_cells=25):
     nearest = np.argsort(dist_sq)[:max_cells]
     soak_cells(grid, b_rows[nearest], b_cols[nearest])
 
+def expected_arrival():
+    #gen the fire is expected to reach the town for the current wind and fire location
+    if WIND_DIRECTION == "NONE":
+        return sum(ARRIVAL_INCINERATOR.values()) / len(ARRIVAL_INCINERATOR) #no data, so use the average
+    if BURN_LOCATION == "Power Plant":
+        return ARRIVAL_INCINERATOR[FLIP[WIND_DIRECTION]]
+    return ARRIVAL_INCINERATOR[WIND_DIRECTION]
+
+
+def drop_shift():
+    #how many generations later than default the drops should happen
+    if DROP_SHIFT is not None:
+        return DROP_SHIFT
+    if WATER_STRATEGY not in LAST_DROP or BURN_LOCATION not in ("Power Plant", "Incinerator"):
+        return 0
+    return expected_arrival() - DROP_LEAD - LAST_DROP[WATER_STRATEGY]
 
 def apply_water_strategy(grid):
+    shift = drop_shift()
     if WATER_STRATEGY == "NONE":
         return
-    elif WATER_STRATEGY == "TOWN_SURROUND" and GENERATION == 60:
+    elif WATER_STRATEGY == "TOWN_SURROUND" and GENERATION == 60 + shift:
         drop_town_surround(grid)
-    elif WATER_STRATEGY == "SINGLE_BLOCK" and GENERATION == 90:
+    elif WATER_STRATEGY == "SINGLE_BLOCK" and GENERATION == 90 + shift:
         drop_single_block(grid)
     elif WATER_STRATEGY == "TWO_LINES":
-        if GENERATION == 45:
+        if GENERATION == 45 + shift:
             drop_two_lines(grid, row_start=52, col_start=25)
-        elif GENERATION == 80:
+        elif GENERATION == 80 + shift:
             drop_two_lines(grid, row_start=84, col_start=28)
-    elif WATER_STRATEGY == "ACTIVE_FRONT" and GENERATION in (65, 95):
+    elif WATER_STRATEGY == "ACTIVE_FRONT" and GENERATION in (65 + shift, 95 + shift):
         drop_active_front(grid, max_cells=25)
 
 PREBURN_STRATEGY = os.environ.get("CA_PREBURN_STRATEGY", "NONE")
